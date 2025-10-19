@@ -1,4 +1,4 @@
-const API = 'https://sistema-mega-acai.onrender.com'; // ajuste se necessário
+const API = ''; // ajuste se necessário
 let token = null;
 let cart = [];
 
