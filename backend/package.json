@@ -1,12 +1,13 @@
 {
   "name": "mega-acai-backend",
   "version": "1.0.0",
+  "description": "Backend do sistema de gestão Mega Açaí",
   "main": "index.js",
   "engines": {
     "node": "22.x"
   },
   "scripts": {
-    "start": "node index.js",
+    "start": "npm run init-db && node index.js",
     "init-db": "node init_db.js"
   },
   "dependencies": {
