@@ -1,27 +1,41 @@
-const API = ''; // ajuste se necessário
+const API = '';
 let token = null;
 let cart = [];
 
-// Função helper para selecionar elementos
-function $(id) { return document.getElementById(id); }
+// Helper
+function $(id){ return document.getElementById(id); }
 
-// Função para fetch com headers e token
-async function fetchJSON(url, opts = {}) {
+// Feedback visual
+function showMessage(msg, type='info', duration=2000){
+    const container = document.createElement('div');
+    container.className = `toast ${type}`;
+    container.textContent = msg;
+    document.body.appendChild(container);
+    setTimeout(() => container.classList.add('show'), 50);
+    setTimeout(() => container.classList.remove('show'), duration);
+    setTimeout(() => container.remove(), duration + 300);
+}
+
+// Fetch com token
+async function fetchJSON(url, opts={}){
     opts.headers = opts.headers || {};
     opts.headers['Content-Type'] = 'application/json';
-    if (token) opts.headers['Authorization'] = 'Bearer ' + token;
-
-    const res = await fetch(API + url, opts);
-    if (res.status === 401) { 
-        alert('Sessão inválida. Faça login novamente.'); 
-        location.reload(); 
-        return; 
+    if(token) opts.headers['Authorization'] = 'Bearer ' + token;
+    try {
+        const res = await fetch(API + url, opts);
+        if(res.status===401){ 
+            showMessage('Sessão inválida. Faça login novamente.', 'error');
+            location.reload();
+            return; 
+        }
+        return await res.json();
+    } catch(e){
+        showMessage('Erro na comunicação com o servidor', 'error');
     }
-    return res.json();
 }
 
 // Inicializar selects
-async function init() {
+async function init(){
     const [products, addons, apps, payments] = await Promise.all([
         fetchJSON('/products'),
         fetchJSON('/add_ons'),
@@ -34,8 +48,8 @@ async function init() {
     populateSelect('paymentSelect', payments, 'id', 'name');
 }
 
-// Popular select
-function populateSelect(id, items, valueField, textField) {
+// Populate select
+function populateSelect(id, items, valueField, textField){
     const sel = $(id);
     sel.innerHTML = '';
     items.forEach(it => {
@@ -46,9 +60,9 @@ function populateSelect(id, items, valueField, textField) {
     });
 }
 
-// Navegação entre seções
-document.querySelectorAll('.nav-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
+// Navegação seções
+document.querySelectorAll('.nav-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
         const target = btn.dataset.target;
         document.querySelectorAll('.section, #dashboardSection').forEach(s => s.classList.add('hidden'));
         $(target).classList.remove('hidden');
@@ -67,14 +81,14 @@ $('#btnLogin').addEventListener('click', async () => {
     const email = $('#email').value.trim();
     const password = $('#password').value.trim();
     const res = await fetchJSON('/auth/login', { method:'POST', body: JSON.stringify({ email, password }) });
-    
     if(res.token){
         token = res.token;
         $('#loginSection').classList.add('hidden');
         $('#dashboardSection').classList.remove('hidden');
+        showMessage('Login realizado com sucesso!', 'success');
         init();
     } else {
-        $('#loginMsg').textContent = res.error || 'Erro ao entrar';
+        showMessage(res.error || 'Erro ao entrar', 'error');
     }
 });
 
@@ -85,6 +99,7 @@ $('#addProduct').addEventListener('click', async () => {
     const prod = (await fetchJSON('/products')).find(p => p.id === productId);
     cart.push({ type:'product', product_id: productId, name: prod.name, qty, price_unit: prod.price, addons: [] });
     renderCart();
+    showMessage(`${prod.name} adicionado ao carrinho`, 'success');
 });
 
 // Adicionar adicional
@@ -93,30 +108,29 @@ $('#addAddon').addEventListener('click', async () => {
     const qty = parseInt($('#addonQty').value) || 1;
     const addon = (await fetchJSON('/add_ons')).find(a => a.id === addonId);
 
-    if(cart.length > 0 && cart[cart.length-1].type === 'product') {
+    if(cart.length > 0 && cart[cart.length-1].type === 'product'){
         cart[cart.length-1].addons.push({ addon_id: addonId, name: addon.name, qty, price_unit: addon.price });
     } else {
         cart.push({ type:'addon', addon_id: addonId, name: addon.name, qty, price_unit: addon.price });
     }
     renderCart();
+    showMessage(`${addon.name} adicionado`, 'success');
 });
 
-// Renderizar carrinho
-function renderCart() {
+// Render carrinho
+function renderCart(){
     const list = $('#cartList');
     list.innerHTML = '';
     let total = 0;
-
-    cart.forEach(c => {
+    cart.forEach(c=>{
         const li = document.createElement('li');
-        if(c.type === 'product') {
+        if(c.type==='product'){
             const sub = c.price_unit * c.qty;
             total += sub;
             li.textContent = `${c.name} x${c.qty} - R$${sub.toFixed(2)}`;
-
-            if(c.addons.length > 0) {
+            if(c.addons.length > 0){
                 const ul = document.createElement('ul');
-                c.addons.forEach(a => {
+                c.addons.forEach(a=>{
                     const subAddon = a.price_unit * a.qty;
                     total += subAddon;
                     const li2 = document.createElement('li');
@@ -130,28 +144,28 @@ function renderCart() {
             total += sub;
             li.textContent = `${c.name} x${c.qty} - R$${sub.toFixed(2)}`;
         }
+        li.classList.add('cart-item', 'fade-in');
         list.appendChild(li);
     });
-
     total += parseFloat($('#deliveryFee').value) || 0;
     $('#totalValue').textContent = total.toFixed(2);
 }
 
 // Finalizar venda
-$('#finalize').addEventListener('click', async () => {
-    if(cart.length === 0){ alert('Carrinho vazio'); return; }
+$('#finalize').addEventListener('click', async ()=>{
+    if(cart.length === 0){ showMessage('Carrinho vazio', 'error'); return; }
 
     const app_id = parseInt($('#appSelect').value) || null;
     const payment_method_id = parseInt($('#paymentSelect').value) || null;
     const delivery_fee = parseFloat($('#deliveryFee').value) || 0;
 
-    const itemsPayload = cart.map(c => {
-        if(c.type === 'product'){
+    const itemsPayload = cart.map(c=>{
+        if(c.type==='product'){
             return {
                 product_id: c.product_id,
                 qty: c.qty,
                 price_unit: c.price_unit,
-                addons: c.addons.map(a => ({ addon_id: a.addon_id, qty: a.qty, price_unit: a.price_unit }))
+                addons: c.addons.map(a=> ({ addon_id: a.addon_id, qty: a.qty, price_unit: a.price_unit }))
             };
         } else {
             return { product_id: null, qty: c.qty, price_unit: c.price_unit, addons: [] };
@@ -161,81 +175,10 @@ $('#finalize').addEventListener('click', async () => {
     const res = await fetchJSON('/sales', { method:'POST', body: JSON.stringify({ items: itemsPayload, delivery_fee, app_id, payment_method_id }) });
 
     if(res && res.success){
-        alert(`Venda registrada — Total R$ ${res.total.toFixed(2)}`);
         cart = [];
         renderCart();
+        showMessage(`Venda registrada — Total R$ ${res.total.toFixed(2)}`, 'success', 4000);
     } else {
-        alert('Erro ao registrar venda: ' + (res.error || JSON.stringify(res)));
+        showMessage('Erro ao registrar venda', 'error');
     }
-});
-
-// Relatórios
-$('#loadSales').addEventListener('click', async () => {
-    const from = $('#fromDate').value || null;
-    const to = $('#toDate').value || null;
-    const rows = await fetchJSON(`/sales?from=${from||''}&to=${to||''}`);
-    const out = $('#reportsOutput');
-    out.innerHTML = '<h4>Vendas</h4>';
-    rows.forEach(r => {
-        const d = document.createElement('div');
-        d.textContent = `${r.date_time} - R$${r.total.toFixed(2)} - ${r.app_name||''} - ${r.payment_name||''}`;
-        out.appendChild(d);
-    });
-});
-
-$('#loadTopProducts').addEventListener('click', async () => {
-    const from = $('#fromDate').value || null;
-    const to = $('#toDate').value || null;
-    const rows = await fetchJSON(`/reports/top-products?from=${from||''}&to=${to||''}`);
-    const out = $('#reportsOutput');
-    out.innerHTML = '<h4>Top Copos</h4>';
-    rows.forEach(r => {
-        const d = document.createElement('div');
-        d.textContent = `${r.name} — ${r.qtd} vendidos`;
-        out.appendChild(d);
-    });
-});
-
-$('#loadTopAddons').addEventListener('click', async () => {
-    const from = $('#fromDate').value || null;
-    const to = $('#toDate').value || null;
-    const rows = await fetchJSON(`/reports/top-addons?from=${from||''}&to=${to||''}`);
-    const out = $('#reportsOutput');
-    out.innerHTML = '<h4>Top Adicionais</h4>';
-    rows.forEach(r => {
-        const d = document.createElement('div');
-        d.textContent = `${r.name} — ${r.qtd} vendidos`;
-        out.appendChild(d);
-    });
-});
-
-// Estoque
-$('#stockSubmit').addEventListener('click', async () => {
-    const produto = $('#stockProduto').value.trim();
-    const tipo = $('#stockTipo').value;
-    const quantidade = parseFloat($('#stockQuant').value) || 0;
-    const valor_unitario = parseFloat($('#stockValor').value) || null;
-    const motivo = $('#stockMotivo').value || '';
-
-    const res = await fetchJSON('/stock/movements', { method:'POST', body: JSON.stringify({ produto, tipo, quantidade, valor_unitario, motivo }) });
-    if(res && res.success){
-        alert('Movimento registrado');
-        $('#stockProduto').value=''; 
-        $('#stockQuant').value='1'; 
-        $('#stockValor').value=''; 
-        $('#stockMotivo').value='';
-    } else {
-        alert('Erro: ' + JSON.stringify(res));
-    }
-});
-
-$('#loadStock').addEventListener('click', async () => {
-    const rows = await fetchJSON('/stock');
-    const out = $('#stockOutput');
-    out.innerHTML = '<h4>Saldo</h4>';
-    rows.forEach(r => {
-        const d = document.createElement('div');
-        d.textContent = `${r.produto} — Entrada: ${r.entrada} Saída: ${r.saida} Saldo: ${r.saldo}`;
-        out.appendChild(d);
-    });
 });
