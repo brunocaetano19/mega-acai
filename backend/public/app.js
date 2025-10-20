@@ -1,61 +1,66 @@
-const API = 'https://sistema-mega-acai.onrender.com';
+// === CONFIGURAÇÃO ===
+const API = ''; // mesmo domínio (Render)
 let token = null;
 let cart = [];
 
-// Helper
+// === FUNÇÕES ÚTEIS ===
 function $(id){ return document.getElementById(id); }
 
-// Toast animado
-function showMessage(msg, type='info', duration=2000){
-    const container = document.createElement('div');
-    container.className = `toast ${type}`;
-    container.textContent = msg;
-    document.body.appendChild(container);
-    setTimeout(() => container.classList.add('show'), 50);
-    setTimeout(() => container.classList.remove('show'), duration);
-    setTimeout(() => container.remove(), duration + 300);
-}
-
-// Highlight item
-function highlightItem(el){
-    el.style.backgroundColor = '#ffecd9';
-    el.style.transition = 'background-color 0.5s';
-    setTimeout(() => el.style.backgroundColor = '', 500);
-}
-
-// Fetch com token
-async function fetchJSON(url, opts={}) {
+async function fetchJSON(url, opts = {}) {
     opts.headers = opts.headers || {};
     opts.headers['Content-Type'] = 'application/json';
-    if(token) opts.headers['Authorization'] = 'Bearer ' + token;
+    if (token) opts.headers['Authorization'] = 'Bearer ' + token;
+
     try {
         const res = await fetch(API + url, opts);
-        if(res.status === 401){ 
-            showMessage('Sessão inválida. Faça login novamente.', 'error');
-            location.reload();
-            return; 
+        if (!res.ok) {
+            if (res.status === 401) {
+                alert('Sessão inválida. Faça login novamente.');
+                location.reload();
+                return;
+            }
+            const text = await res.text();
+            throw new Error(text || 'Erro desconhecido');
         }
         return await res.json();
-    } catch(e){
-        showMessage('Erro na comunicação com o servidor', 'error');
-        console.error(e);
+    } catch (e) {
+        console.error('Erro ao conectar com servidor:', e);
+        alert('Erro ao conectar com o servidor. Verifique sua conexão.');
+        return null;
     }
 }
 
-// Populate select
-function populateSelect(id, items, valueField, textField){
-    const sel = $(id);
-    if(!sel) return;
-    sel.innerHTML = '';
-    items?.forEach(it => {
-        const o = document.createElement('option');
-        o.value = it[valueField];
-        o.textContent = it[textField] + (it.price ? ` - R$${(it.price||0).toFixed(2)}` : '');
-        sel.appendChild(o);
-    });
-}
+// === LOGIN ===
+$('btnLogin').addEventListener('click', async ()=>{
+    const email = $('email').value.trim();
+    const password = $('password').value.trim();
 
-// Inicializar selects
+    if(!email || !password){
+        $('loginMsg').textContent = 'Preencha e-mail e senha.';
+        return;
+    }
+
+    $('loginMsg').textContent = 'Entrando...';
+
+    const res = await fetchJSON('/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ email, password })
+    });
+
+    if(res && res.token){
+        token = res.token;
+        $('loginSection').classList.add('hidden');
+        $('pdvSection').classList.remove('hidden');
+        $('reportsSection').classList.remove('hidden');
+        $('stockSection').classList.remove('hidden');
+        $('userArea').textContent = `${res.user.name} (${res.user.email})`;
+        init();
+    } else {
+        $('loginMsg').textContent = res?.error || 'Erro ao entrar. Verifique usuário e senha.';
+    }
+});
+
+// === INICIALIZAÇÃO ===
 async function init(){
     const [products, addons, apps, payments] = await Promise.all([
         fetchJSON('/products'),
@@ -63,151 +68,211 @@ async function init(){
         fetchJSON('/apps'),
         fetchJSON('/payment_methods')
     ]);
+
     populateSelect('productSelect', products, 'id', 'name');
     populateSelect('addonSelect', addons, 'id', 'name');
     populateSelect('appSelect', apps, 'id', 'name');
     populateSelect('paymentSelect', payments, 'id', 'name');
 }
 
-// Render carrinho
+function populateSelect(id, items, valueField, textField){
+    const sel = $(id);
+    sel.innerHTML = '';
+    if(!items) return;
+    items.forEach(it=>{
+        const o = document.createElement('option');
+        o.value = it[valueField];
+        o.textContent = it[textField] + (it.price ? (' - R$' + (it.price||0).toFixed(2)) : '');
+        sel.appendChild(o);
+    });
+}
+
+// === ADICIONAR PRODUTO ===
+$('addProduct').addEventListener('click', async ()=>{
+    const sel = $('productSelect');
+    const productId = parseInt(sel.value);
+    const qty = parseInt($('productQty').value) || 1;
+    const products = await fetchJSON('/products');
+    const prod = products.find(p=>p.id===productId);
+    if(!prod) return alert('Produto inválido');
+
+    cart.push({ 
+        type: 'product',
+        product_id: productId,
+        name: prod.name,
+        qty,
+        price_unit: prod.price,
+        addons: []
+    });
+    renderCart();
+});
+
+// === ADICIONAR ADICIONAL ===
+$('addAddon').addEventListener('click', async ()=>{
+    const sel = $('addonSelect');
+    const addonId = parseInt(sel.value);
+    const qty = parseInt($('addonQty').value) || 1;
+    const addons = await fetchJSON('/add_ons');
+    const addon = addons.find(a=>a.id===addonId);
+    if(!addon) return alert('Adicional inválido');
+
+    if(cart.length>0 && cart[cart.length-1].type==='product'){
+        cart[cart.length-1].addons.push({
+            addon_id: addonId,
+            name: addon.name,
+            qty,
+            price_unit: addon.price
+        });
+    } else {
+        cart.push({
+            type: 'addon',
+            addon_id: addonId,
+            name: addon.name,
+            qty,
+            price_unit: addon.price
+        });
+    }
+    renderCart();
+});
+
+// === RENDER CARRINHO ===
 function renderCart(){
-    const list = $('#cartList');
-    if(!list) return;
+    const list = $('cartList');
     list.innerHTML = '';
     let total = 0;
 
-    cart.forEach(c=>{
+    cart.forEach((c)=>{
         const li = document.createElement('li');
-        li.classList.add('cart-item', 'fade-in-slide');
+        const sub = c.price_unit * c.qty;
+        total += sub;
+        li.textContent = `${c.name} x${c.qty} - R$${sub.toFixed(2)}`;
 
-        if(c.type === 'product'){
-            const sub = c.price_unit * c.qty;
-            total += sub;
-            li.textContent = `${c.name} x${c.qty} - R$${sub.toFixed(2)}`;
-
-            if(c.addons.length > 0){
-                const ul = document.createElement('ul');
-                c.addons.forEach(a=>{
-                    const subAddon = a.price_unit * a.qty;
-                    total += subAddon;
-                    const li2 = document.createElement('li');
-                    li2.textContent = `+ ${a.name} x${a.qty} - R$${subAddon.toFixed(2)}`;
-                    ul.appendChild(li2);
-                });
-                li.appendChild(ul);
-            }
-        } else {
-            const sub = c.price_unit * c.qty;
-            total += sub;
-            li.textContent = `${c.name} x${c.qty} - R$${sub.toFixed(2)}`;
+        if(c.addons && c.addons.length>0){
+            const ul = document.createElement('ul');
+            c.addons.forEach(a=>{
+                const las = a.price_unit * a.qty;
+                total += las;
+                const li2 = document.createElement('li');
+                li2.textContent = `+ ${a.name} x${a.qty} - R$${las.toFixed(2)}`;
+                ul.appendChild(li2);
+            });
+            li.appendChild(ul);
         }
-
         list.appendChild(li);
     });
 
-    total += parseFloat($('#deliveryFee')?.value) || 0;
-    $('#totalValue').textContent = total.toFixed(2);
+    const delivery = parseFloat($('deliveryFee').value) || 0;
+    total += delivery;
+    $('totalValue').textContent = total.toFixed(2);
 }
 
-// Evento principal
-document.addEventListener('DOMContentLoaded', () => {
+// === FINALIZAR VENDA ===
+$('finalize').addEventListener('click', async ()=>{
+    if(cart.length===0){
+        alert('Carrinho vazio.');
+        return;
+    }
 
-    // Login
-    $('#btnLogin')?.addEventListener('click', async () => {
-        const email = $('#email')?.value.trim();
-        const password = $('#password')?.value.trim();
-        if(!email || !password){ showMessage('Preencha email e senha', 'error'); return; }
+    const app_id = parseInt($('appSelect').value) || null;
+    const payment_method_id = parseInt($('paymentSelect').value) || null;
+    const delivery_fee = parseFloat($('deliveryFee').value) || 0;
 
-        $('#btnLogin').disabled = true;
-        const res = await fetchJSON('/auth/login', { method:'POST', body: JSON.stringify({ email, password }) });
-        $('#btnLogin').disabled = false;
+    const itemsPayload = cart.map(c => ({
+        product_id: c.product_id || null,
+        qty: c.qty,
+        price_unit: c.price_unit,
+        addons: c.addons?.map(a=>({
+            addon_id: a.addon_id,
+            qty: a.qty,
+            price_unit: a.price_unit
+        })) || []
+    }));
 
-        if(res?.token){
-            token = res.token;
-            $('#loginSection')?.classList.add('hidden');
-            $('#pdvSection')?.classList.remove('hidden');
-            $('#logoutBtn')?.classList.remove('hidden');
-            showMessage('Login realizado com sucesso!', 'success');
-            init();
-        } else {
-            showMessage(res?.error || 'Erro ao entrar', 'error');
-        }
+    const res = await fetchJSON('/sales', {
+        method: 'POST',
+        body: JSON.stringify({ items: itemsPayload, delivery_fee, app_id, payment_method_id })
     });
 
-    // Logout
-    $('#logoutBtn')?.addEventListener('click', () => {
-        token = null;
+    if(res && res.success){
+        alert('Venda registrada — Total R$ ' + res.total.toFixed(2));
         cart = [];
         renderCart();
-        $('#pdvSection')?.classList.add('hidden');
-        $('#loginSection')?.classList.remove('hidden');
-        $('#logoutBtn')?.classList.add('hidden');
+    } else {
+        alert('Erro ao registrar venda: ' + (res?.error || 'Desconhecido'));
+    }
+});
+
+// === RELATÓRIOS ===
+$('loadSales').addEventListener('click', async ()=>{
+    const from = $('fromDate').value || '';
+    const to = $('toDate').value || '';
+    const rows = await fetchJSON(`/sales?from=${from}&to=${to}`);
+    const out = $('reportsOutput');
+    out.innerHTML = '<h4>Vendas</h4>';
+    rows?.forEach(r=>{
+        const d = document.createElement('div');
+        d.textContent = `${r.date_time} - R$${r.total.toFixed(2)} - ${r.app_name||''} - ${r.payment_name||''}`;
+        out.appendChild(d);
+    });
+});
+
+$('loadTopProducts').addEventListener('click', async ()=>{
+    const from = $('fromDate').value || '';
+    const to = $('toDate').value || '';
+    const rows = await fetchJSON(`/reports/top-products?from=${from}&to=${to}`);
+    const out = $('reportsOutput');
+    out.innerHTML = '<h4>Top Copos</h4>';
+    rows?.forEach(r=>{
+        const d = document.createElement('div');
+        d.textContent = `${r.name} — ${r.qtd} vendidos`;
+        out.appendChild(d);
+    });
+});
+
+$('loadTopAddons').addEventListener('click', async ()=>{
+    const from = $('fromDate').value || '';
+    const to = $('toDate').value || '';
+    const rows = await fetchJSON(`/reports/top-addons?from=${from}&to=${to}`);
+    const out = $('reportsOutput');
+    out.innerHTML = '<h4>Top Adicionais</h4>';
+    rows?.forEach(r=>{
+        const d = document.createElement('div');
+        d.textContent = `${r.name} — ${r.qtd} vendidos`;
+        out.appendChild(d);
+    });
+});
+
+// === ESTOQUE ===
+$('stockSubmit').addEventListener('click', async ()=>{
+    const produto = $('stockProduto').value.trim();
+    const tipo = $('stockTipo').value;
+    const quantidade = parseFloat($('stockQuant').value) || 0;
+    const valor_unitario = parseFloat($('stockValor').value) || null;
+    const motivo = $('stockMotivo').value || '';
+
+    const res = await fetchJSON('/stock/movements', {
+        method:'POST',
+        body: JSON.stringify({ produto, tipo, quantidade, valor_unitario, motivo })
     });
 
-    // Adicionar produto
-    $('#addProduct')?.addEventListener('click', async () => {
-        const productId = parseInt($('#productSelect')?.value);
-        const qty = parseInt($('#productQty')?.value) || 1;
-        if(!productId){ showMessage('Selecione um produto', 'error'); return; }
+    if(res && res.success){
+        alert('Movimento registrado!');
+        $('stockProduto').value = '';
+        $('stockQuant').value = '1';
+        $('stockValor').value = '';
+        $('stockMotivo').value = '';
+    } else {
+        alert('Erro ao registrar movimento: ' + (res?.error || 'Desconhecido'));
+    }
+});
 
-        const prod = (await fetchJSON('/products'))?.find(p => p.id === productId);
-        if(!prod) { showMessage('Produto inválido', 'error'); return; }
-
-        cart.push({ type:'product', product_id: productId, name: prod.name, qty, price_unit: prod.price, addons: [] });
-        renderCart();
-        showMessage(`${prod.name} adicionado ao carrinho`, 'success');
-        const lastItem = $('#cartList')?.lastChild;
-        if(lastItem) highlightItem(lastItem);
-    });
-
-    // Adicionar adicional
-    $('#addAddon')?.addEventListener('click', async () => {
-        const addonId = parseInt($('#addonSelect')?.value);
-        const qty = parseInt($('#addonQty')?.value) || 1;
-        if(!addonId){ showMessage('Selecione um adicional', 'error'); return; }
-
-        const addon = (await fetchJSON('/add_ons'))?.find(a => a.id === addonId);
-        if(!addon) { showMessage('Adicional inválido', 'error'); return; }
-
-        if(cart.length > 0 && cart[cart.length-1].type === 'product'){
-            cart[cart.length-1].addons.push({ addon_id: addonId, name: addon.name, qty, price_unit: addon.price });
-        } else {
-            cart.push({ type:'addon', addon_id: addonId, name: addon.name, qty, price_unit: addon.price });
-        }
-        renderCart();
-        showMessage(`${addon.name} adicionado`, 'success');
-        const lastItem = $('#cartList')?.lastChild;
-        if(lastItem) highlightItem(lastItem);
-    });
-
-    // Finalizar venda
-    $('#finalize')?.addEventListener('click', async ()=>{
-        if(cart.length === 0){ showMessage('Carrinho vazio', 'error'); return; }
-
-        const app_id = parseInt($('#appSelect')?.value) || null;
-        const payment_method_id = parseInt($('#paymentSelect')?.value) || null;
-        const delivery_fee = parseFloat($('#deliveryFee')?.value) || 0;
-
-        const itemsPayload = cart.map(c=>{
-            if(c.type==='product'){
-                return {
-                    product_id: c.product_id,
-                    qty: c.qty,
-                    price_unit: c.price_unit,
-                    addons: c.addons.map(a=> ({ addon_id: a.addon_id, qty: a.qty, price_unit: a.price_unit }))
-                };
-            } else {
-                return { product_id: null, qty: c.qty, price_unit: c.price_unit, addons: [] };
-            }
-        });
-
-        const res = await fetchJSON('/sales', { method:'POST', body: JSON.stringify({ items: itemsPayload, delivery_fee, app_id, payment_method_id }) });
-        if(res?.success){
-            cart = [];
-            renderCart();
-            showMessage(`Venda registrada — Total R$ ${res.total?.toFixed(2)}`, 'success', 4000);
-        } else {
-            showMessage('Erro ao registrar venda', 'error');
-        }
+$('loadStock').addEventListener('click', async ()=>{
+    const rows = await fetchJSON('/stock');
+    const out = $('stockOutput');
+    out.innerHTML = '<h4>Saldo de Estoque</h4>';
+    rows?.forEach(r=>{
+        const d = document.createElement('div');
+        d.textContent = `${r.produto} — Entrada: ${r.entrada} | Saída: ${r.saida} | Saldo: ${r.saldo}`;
+        out.appendChild(d);
     });
 });
