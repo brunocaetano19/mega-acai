@@ -276,3 +276,8 @@ $('loadStock').addEventListener('click', async ()=>{
         out.appendChild(d);
     });
 });
+function liberarMenu() {
+    document.getElementById('btnVenda').classList.remove('hidden');
+    document.getElementById('btnRelatorios').classList.remove('hidden');
+    document.getElementById('btnEstoque').classList.remove('hidden');
+}

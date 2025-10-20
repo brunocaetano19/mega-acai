@@ -11,12 +11,14 @@
 
         <!-- Tela Inicial -->
         <section id="home" class="active">
-            <img src="/public/Logo.jpeg" alt="Mega Açaí" class="logo">
+            <img src="Logo.jpeg" alt="Mega Açaí" class="logo">
             <div class="menu">
                 <button onclick="showSection('login')">Entrar</button>
-                <button onclick="showSection('pdv')">Venda</button>
-                <button onclick="showSection('relatorios')">Relatórios</button>
-                <button onclick="showSection('estoque')">Estoque</button>
+
+                <!-- Esses botões ficam escondidos até o login -->
+                <button id="btnVenda" class="hidden" onclick="showSection('pdv')">Venda</button>
+                <button id="btnRelatorios" class="hidden" onclick="showSection('relatorios')">Relatórios</button>
+                <button id="btnEstoque" class="hidden" onclick="showSection('estoque')">Estoque</button>
             </div>
         </section>
 

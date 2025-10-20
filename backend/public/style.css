@@ -96,6 +96,11 @@ button:hover {
     50% { transform: translateY(-10px); }
 }
 
+.hidden {
+    display: none;
+}
+
+
 .toast {
     position: fixed;
     bottom: 20px;
