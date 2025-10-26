@@ -10,7 +10,8 @@
 
   <!-- === TELA DE LOGIN === -->
   <section id="loginSection" class="section active">
-    <div class="login-box">
+    <div class="container fade-in">
+      <img src="logo.png" alt="Logo Mega Açaí" class="logo">
       <h1>🍧 Mega Açaí</h1>
       <input type="email" id="email" placeholder="E-mail" autocomplete="username">
       <input type="password" id="password" placeholder="Senha" autocomplete="current-password">
@@ -19,19 +20,21 @@
     </div>
   </section>
 
-  <!-- === MENU === -->
+  <!-- === MENU (somente após login) === -->
   <header id="menu" class="hidden">
-    <span id="userArea"></span>
-    <nav>
-      <button id="btnVenda">PDV</button>
-      <button id="btnRelatorios">Relatórios</button>
-      <button id="btnEstoque">Estoque</button>
-      <button id="btnLogout" class="logout">Sair</button>
-    </nav>
+    <div class="container">
+      <h2 id="userArea"></h2>
+      <div class="menu">
+        <button id="btnVenda">PDV</button>
+        <button id="btnRelatorios">Relatórios</button>
+        <button id="btnEstoque">Estoque</button>
+        <button id="btnLogout" class="logout">Sair</button>
+      </div>
+    </div>
   </header>
 
-  <!-- === PDV === -->
-  <section id="pdvSection" class="section hidden">
+  <!-- === SEÇÕES === -->
+  <section id="pdvSection" class="section hidden fade-in">
     <h2>Ponto de Venda</h2>
     <div class="pdv-container">
       <select id="productSelect"></select>
@@ -52,8 +55,7 @@
     </div>
   </section>
 
-  <!-- === RELATÓRIOS === -->
-  <section id="reportsSection" class="section hidden">
+  <section id="reportsSection" class="section hidden fade-in">
     <h2>Relatórios</h2>
     <input type="date" id="fromDate">
     <input type="date" id="toDate">
@@ -63,8 +65,7 @@
     <div id="reportsOutput"></div>
   </section>
 
-  <!-- === ESTOQUE === -->
-  <section id="stockSection" class="section hidden">
+  <section id="stockSection" class="section hidden fade-in">
     <h2>Controle de Estoque</h2>
     <input type="text" id="stockProduto" placeholder="Produto">
     <select id="stockTipo">
@@ -78,6 +79,8 @@
     <button id="loadStock">Ver Estoque</button>
     <div id="stockOutput"></div>
   </section>
+
+  <div class="toast" id="toast"></div>
 
   <script src="app.js"></script>
 </body>
