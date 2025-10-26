@@ -1,83 +1,114 @@
 body {
-  margin: 0;
-  font-family: 'Segoe UI', sans-serif;
-  background: #f8f9fa;
-  color: #333;
+    margin: 0;
+    font-family: 'Poppins', sans-serif;
+    background: linear-gradient(135deg, #5b0d68, #ff0077);
+    color: #fff;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.section {
-  display: none;
-  padding: 20px;
-  text-align: center;
-  animation: fadeIn 0.4s ease;
+.container {
+    width: 90%;
+    max-width: 400px;
+    text-align: center;
+    animation: fadeIn 1s ease;
 }
 
-.section.active {
-  display: block;
+.logo {
+    width: 180px;
+    margin-bottom: 30px;
+    animation: float 3s ease-in-out infinite;
 }
 
-.hidden {
-  display: none !important;
+.menu button {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    margin: 8px 0;
+    font-size: 16px;
+    background: #fff;
+    color: #8a0072;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
 }
 
-.login-box {
-  background: white;
-  padding: 25px;
-  border-radius: 12px;
-  box-shadow: 0 0 10px rgba(0,0,0,0.15);
-  width: 280px;
-  margin: 100px auto;
+.menu button:hover {
+    background: #ff5fb2;
+    color: #fff;
 }
 
-.login-box input {
-  display: block;
-  width: 100%;
-  margin: 8px 0;
-  padding: 10px;
-  border: 1px solid #bbb;
-  border-radius: 6px;
+section {
+    display: none;
 }
 
-.login-box button {
-  width: 100%;
-  background: #8a2be2;
-  color: white;
-  border: none;
-  padding: 10px;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background 0.3s;
-}
-.login-box button:hover {
-  background: #7026b9;
+section.active {
+    display: block;
 }
 
-header {
-  background: #8a2be2;
-  color: white;
-  padding: 10px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-header nav button {
-  background: white;
-  color: #8a2be2;
-  border: none;
-  margin: 0 5px;
-  padding: 8px 12px;
-  border-radius: 6px;
-  cursor: pointer;
-}
-header nav .logout {
-  background: crimson;
-  color: white;
+input, select {
+    width: 100%;
+    padding: 10px;
+    margin: 6px 0;
+    border-radius: 6px;
+    border: none;
+    font-size: 15px;
 }
 
-ul { list-style: none; padding: 0; }
-.msg { color: red; font-size: 14px; }
+button {
+    background: #fff;
+    color: #8a0072;
+    border: none;
+    border-radius: 6px;
+    padding: 10px 15px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+button:hover {
+    background: #ff5fb2;
+    color: #fff;
+}
+
+.back {
+    margin-top: 15px;
+    color: #fff;
+    cursor: pointer;
+    font-size: 14px;
+    opacity: 0.8;
+}
+
+.fade-in {
+    animation: fadeIn 1s ease;
+}
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+    from { opacity: 0; transform: translateY(15px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+.toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #fff;
+    color: #8a0072;
+    padding: 10px 20px;
+    border-radius: 8px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+    opacity: 0;
+    transition: 0.4s;
+}
+.toast.show {
+    opacity: 1;
 }
