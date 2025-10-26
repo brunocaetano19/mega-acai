@@ -1,5 +1,5 @@
 // === CONFIG ===
-const API = ''; // vazio = mesmo domínio (Render)
+const API = 'https://api-mega-acai.onrender.com';
 let token = null;
 let cart = [];
 
