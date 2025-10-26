@@ -1,106 +1,86 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sistema Mega Açaí</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <!-- MENU (inicialmente oculto) -->
-  <header id="menu" class="hidden">
-    <div class="menu-left">
-      <span id="userArea" class="user-area">User</span>
+  <!-- === TELA DE LOGIN === -->
+  <section id="loginSection" class="section active">
+    <div class="container fade-in">
+      <img src="logo.png" alt="Logo Mega Açaí" class="logo">
+      <h1>🍧 Mega Açaí</h1>
+      <input type="email" id="email" placeholder="E-mail" autocomplete="username">
+      <input type="password" id="password" placeholder="Senha" autocomplete="current-password">
+      <button id="btnLogin">Entrar</button>
+      <p id="loginMsg" class="msg"></p>
     </div>
-    <nav class="menu-nav">
-      <button id="btnVenda">PDV</button>
-      <button id="btnRelatorios">Relatórios</button>
-      <button id="btnEstoque">Estoque</button>
-      <button id="btnLogout" class="logout">Sair</button>
-    </nav>
+  </section>
+
+  <!-- === MENU (somente após login) === -->
+  <header id="menu" class="hidden">
+    <div class="container">
+      <h2 id="userArea"></h2>
+      <div class="menu">
+        <button id="btnVenda">PDV</button>
+        <button id="btnRelatorios">Relatórios</button>
+        <button id="btnEstoque">Estoque</button>
+        <button id="btnLogout" class="logout">Sair</button>
+      </div>
+    </div>
   </header>
 
-  <main class="container">
+  <!-- === SEÇÕES === -->
+  <section id="pdvSection" class="section hidden fade-in">
+    <h2>Ponto de Venda</h2>
+    <div class="pdv-container">
+      <select id="productSelect"></select>
+      <input type="number" id="productQty" value="1" min="1">
+      <button id="addProduct">Adicionar Produto</button>
 
-    <!-- === LOGIN === -->
-    <section id="loginSection" class="section active">
-      <div class="login-box">
-        <h1>🍧 Mega Açaí</h1>
-        <input type="email" id="email" placeholder="E-mail" autocomplete="username" />
-        <input type="password" id="password" placeholder="Senha" autocomplete="current-password" />
-        <button id="btnLogin">Entrar</button>
-        <p id="loginMsg" class="msg muted"></p>
-      </div>
-    </section>
+      <select id="addonSelect"></select>
+      <input type="number" id="addonQty" value="1" min="1">
+      <button id="addAddon">Adicionar Adicional</button>
 
-    <!-- === PDV === -->
-    <section id="pdvSection" class="section hidden">
-      <h2>Ponto de Venda</h2>
-      <div class="pdv-grid">
-        <div class="col">
-          <label>Produto</label>
-          <select id="productSelect"></select>
-          <label>Qtd</label>
-          <input type="number" id="productQty" value="1" min="1" />
-          <button id="addProduct">Adicionar Produto</button>
-        </div>
+      <input type="number" id="deliveryFee" placeholder="Taxa de entrega" step="0.01">
+      <select id="appSelect"></select>
+      <select id="paymentSelect"></select>
 
-        <div class="col">
-          <label>Adicional</label>
-          <select id="addonSelect"></select>
-          <label>Qtd</label>
-          <input type="number" id="addonQty" value="1" min="1" />
-          <button id="addAddon">Adicionar Adicional</button>
-        </div>
+      <ul id="cartList"></ul>
+      <h3>Total: R$ <span id="totalValue">0.00</span></h3>
+      <button id="finalize">Finalizar Venda</button>
+    </div>
+  </section>
 
-        <div class="col full">
-          <label>Taxa de entrega</label>
-          <input type="number" id="deliveryFee" placeholder="0.00" step="0.01" />
-          <label>Aplicativo</label>
-          <select id="appSelect"></select>
-          <label>Forma de pagamento</label>
-          <select id="paymentSelect"></select>
-        </div>
+  <section id="reportsSection" class="section hidden fade-in">
+    <h2>Relatórios</h2>
+    <input type="date" id="fromDate">
+    <input type="date" id="toDate">
+    <button id="loadSales">Vendas</button>
+    <button id="loadTopProducts">Top Copos</button>
+    <button id="loadTopAddons">Top Adicionais</button>
+    <div id="reportsOutput"></div>
+  </section>
 
-        <div class="col full">
-          <h3>Resumo</h3>
-          <ul id="cartList" class="cart-list"></ul>
-          <div class="total-row">Total: R$ <span id="totalValue">0.00</span></div>
-          <button id="finalize">Finalizar Venda</button>
-        </div>
-      </div>
-    </section>
+  <section id="stockSection" class="section hidden fade-in">
+    <h2>Controle de Estoque</h2>
+    <input type="text" id="stockProduto" placeholder="Produto">
+    <select id="stockTipo">
+      <option value="entrada">Entrada</option>
+      <option value="saida">Saída</option>
+    </select>
+    <input type="number" id="stockQuant" value="1" step="0.1">
+    <input type="number" id="stockValor" placeholder="Valor unitário (opcional)" step="0.01">
+    <input type="text" id="stockMotivo" placeholder="Motivo (opcional)">
+    <button id="stockSubmit">Registrar Movimento</button>
+    <button id="loadStock">Ver Estoque</button>
+    <div id="stockOutput"></div>
+  </section>
 
-    <!-- === RELATÓRIOS === -->
-    <section id="reportsSection" class="section hidden">
-      <h2>Relatórios</h2>
-      <div class="row">
-        <input type="date" id="fromDate" />
-        <input type="date" id="toDate" />
-        <button id="loadSales">Carregar Vendas</button>
-        <button id="loadTopProducts">Top Copos</button>
-        <button id="loadTopAddons">Top Adicionais</button>
-      </div>
-      <div id="reportsOutput" class="report-output"></div>
-    </section>
-
-    <!-- === ESTOQUE === -->
-    <section id="stockSection" class="section hidden">
-      <h2>Controle de Estoque</h2>
-      <input id="stockProduto" placeholder="Produto" />
-      <select id="stockTipo"><option value="entrada">Entrada</option><option value="saida">Saída</option></select>
-      <input id="stockQuant" type="number" value="1" step="0.01" />
-      <input id="stockValor" type="number" step="0.01" placeholder="Valor unitário (opcional)" />
-      <input id="stockMotivo" placeholder="Motivo (opcional)" />
-      <div class="row">
-        <button id="stockSubmit">Registrar Movimento</button>
-        <button id="loadStock">Ver Saldo</button>
-      </div>
-      <div id="stockOutput" class="report-output"></div>
-    </section>
-
-  </main>
+  <div class="toast" id="toast"></div>
 
   <script src="app.js"></script>
 </body>
