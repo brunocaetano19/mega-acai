@@ -9,6 +9,10 @@ body {
     justify-content: center;
 }
 
+.hidden {
+    display: none !important;
+}
+
 .container {
     width: 90%;
     max-width: 400px;
@@ -22,6 +26,7 @@ body {
     animation: float 3s ease-in-out infinite;
 }
 
+/* === MENU === */
 .menu button {
     display: block;
     width: 100%;
