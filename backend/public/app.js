@@ -1,254 +1,242 @@
-// === CONFIG ===
-const API = 'https://api-mega-acai.onrender.com';
+// === CONFIGURAÇÃO ===
+const API = ''; // mesmo domínio (Render)
 let token = null;
 let cart = [];
 
-// helper
-const $ = id => document.getElementById(id);
+// === FUNÇÕES GERAIS ===
+function $(id){ return document.getElementById(id); }
 
-// show/hide menu & sections
-function showMenu(show){
-  const menu = $('menu');
-  if(!menu) return;
-  if(show) menu.classList.remove('hidden');
-  else menu.classList.add('hidden');
-}
 function showSection(sectionId){
-  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-  const el = $(sectionId);
-  if(el) el.classList.add('active');
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  $(sectionId).classList.add('active');
 }
 
-/* Fetch wrapper */
-async function fetchJSON(endpoint, options = {}){
-  options.headers = options.headers || {};
-  options.headers['Content-Type'] = 'application/json';
-  if (token) options.headers['Authorization'] = 'Bearer ' + token;
-  try {
-    const res = await fetch(API + endpoint, options);
-    if (!res.ok) {
-      // return JSON error if any
-      const txt = await res.text().catch(()=>null);
-      console.error('fetch error', res.status, txt);
-      return { error: txt || `HTTP ${res.status}` };
-    }
-    return await res.json();
-  } catch (e) {
-    console.error('network error', e);
-    return { error: 'Falha na comunicação com o servidor' };
+function showMenu(show){
+  if(show){
+    $('menu').classList.remove('hidden');
+  } else {
+    $('menu').classList.add('hidden');
   }
 }
 
-/* populate helper */
-function populateSelect(id, items){
-  const sel = $(id);
-  if(!sel) return;
-  sel.innerHTML = '';
-  if(!items || !Array.isArray(items)) return;
-  items.forEach(i => {
-    const opt = document.createElement('option');
-    opt.value = i.id;
-    opt.textContent = i.name + (typeof i.price === 'number' ? ` - R$${i.price.toFixed(2)}` : '');
-    sel.appendChild(opt);
-  });
+async function fetchJSON(endpoint, options={}){
+  options.headers = options.headers || {};
+  options.headers['Content-Type'] = 'application/json';
+  if(token) options.headers['Authorization'] = 'Bearer ' + token;
+
+  try {
+    const res = await fetch(API + endpoint, options);
+    if(!res.ok) throw new Error(`Erro ${res.status}`);
+    return await res.json();
+  } catch(err){
+    console.error('Erro ao buscar:', err);
+    alert('Falha na comunicação com o servidor.');
+    return null;
+  }
 }
 
-/* render cart */
-function renderCart(){
-  const list = $('cartList');
-  if(!list) return;
-  list.innerHTML = '';
-  let total = 0;
-  cart.forEach(c => {
-    const li = document.createElement('li');
-    const sub = (c.price_unit || 0) * (c.qty || 1);
-    total += sub;
-    li.textContent = `${c.name} x${c.qty} - R$${sub.toFixed(2)}`;
-    if(c.addons && c.addons.length){
-      const ul = document.createElement('ul');
-      c.addons.forEach(a=>{
-        const s = a.price_unit * a.qty;
-        total += s;
-        const li2 = document.createElement('li');
-        li2.textContent = `+ ${a.name} x${a.qty} - R$${s.toFixed(2)}`;
-        ul.appendChild(li2);
-      });
-      li.appendChild(ul);
-    }
-    list.appendChild(li);
-  });
-  const delivery = parseFloat($('deliveryFee')?.value) || 0;
-  total += delivery;
-  if($('totalValue')) $('totalValue').textContent = total.toFixed(2);
-}
+// === LOGIN ===
+$('btnLogin').addEventListener('click', async ()=>{
+  const email = $('email').value.trim();
+  const password = $('password').value.trim();
+  if(!email || !password){
+    $('loginMsg').textContent = 'Preencha todos os campos.';
+    return;
+  }
 
-/* init (load selects) */
+  $('loginMsg').textContent = 'Entrando...';
+  const res = await fetchJSON('/auth/login', {
+    method:'POST',
+    body: JSON.stringify({ email, password })
+  });
+
+  if(res && res.token){
+    token = res.token;
+    $('userArea').textContent = `${res.user.name} (${res.user.email})`;
+    showMenu(true);
+    showSection('pdvSection');
+    await init();
+  } else {
+    $('loginMsg').textContent = res?.error || 'Usuário ou senha incorretos.';
+  }
+});
+
+$('btnLogout').addEventListener('click', ()=>{
+  token = null;
+  showMenu(false);
+  showSection('loginSection');
+});
+
+// === MENU ===
+$('btnVenda').addEventListener('click', ()=> showSection('pdvSection'));
+$('btnRelatorios').addEventListener('click', ()=> showSection('reportsSection'));
+$('btnEstoque').addEventListener('click', ()=> showSection('stockSection'));
+
+// === INICIALIZAÇÃO ===
 async function init(){
-  const [productsRes, addonsRes, appsRes, paymentsRes] = await Promise.all([
+  const [products, addons, apps, payments] = await Promise.all([
     fetchJSON('/products'),
     fetchJSON('/add_ons'),
     fetchJSON('/apps'),
     fetchJSON('/payment_methods')
   ]);
-  if (productsRes?.error) console.warn(productsRes.error);
-  populateSelect('productSelect', productsRes);
-  populateSelect('addonSelect', addonsRes);
-  populateSelect('appSelect', appsRes);
-  populateSelect('paymentSelect', paymentsRes);
+  populateSelect('productSelect', products);
+  populateSelect('addonSelect', addons);
+  populateSelect('appSelect', apps);
+  populateSelect('paymentSelect', payments);
 }
 
-/* event wiring AFTER DOM loaded */
-document.addEventListener('DOMContentLoaded', () => {
+function populateSelect(id, items){
+  const sel = $(id);
+  sel.innerHTML = '';
+  if(!items) return;
+  items.forEach(i=>{
+    const opt = document.createElement('option');
+    opt.value = i.id;
+    opt.textContent = i.name + (i.price ? ` - R$${i.price.toFixed(2)}` : '');
+    sel.appendChild(opt);
+  });
+}
 
-  // start state
-  showMenu(false);
-  showSection('loginSection');
+// === CARRINHO ===
+$('addProduct').addEventListener('click', async ()=>{
+  const id = parseInt($('productSelect').value);
+  const qty = parseInt($('productQty').value);
+  const products = await fetchJSON('/products');
+  const prod = products.find(p=>p.id===id);
+  if(!prod) return alert('Produto inválido');
 
-  // LOGIN
-  const btnLogin = $('btnLogin');
-  if(btnLogin){
-    btnLogin.addEventListener('click', async () => {
-      const email = $('email')?.value.trim();
-      const password = $('password')?.value.trim();
-      if(!email || !password){
-        $('loginMsg').textContent = 'Preencha e-mail e senha.';
-        return;
-      }
-      $('loginMsg').textContent = 'Entrando...';
-      const res = await fetchJSON('/auth/login', { method:'POST', body: JSON.stringify({ email, password }) });
-      if(res && res.token){
-        token = res.token;
-        $('loginMsg').textContent = '';
-        $('userArea').textContent = `${res.user.name} (${res.user.email})`;
-        showMenu(true);
-        showSection('pdvSection');
-        await init();
-      } else {
-        $('loginMsg').textContent = res?.error || 'Usuário ou senha incorretos.';
-      }
-    });
+  cart.push({type:'product', name:prod.name, price_unit:prod.price, qty, addons:[]});
+  renderCart();
+});
+
+$('addAddon').addEventListener('click', async ()=>{
+  const id = parseInt($('addonSelect').value);
+  const qty = parseInt($('addonQty').value);
+  const addons = await fetchJSON('/add_ons');
+  const add = addons.find(a=>a.id===id);
+  if(!add) return alert('Adicional inválido');
+
+  if(cart.length>0){
+    cart[cart.length-1].addons.push({name:add.name, price_unit:add.price, qty});
   }
+  renderCart();
+});
 
-  // LOGOUT
-  const btnLogout = $('btnLogout');
-  if(btnLogout) btnLogout.addEventListener('click', () => {
-    token = null;
+function renderCart(){
+  const list = $('cartList');
+  list.innerHTML = '';
+  let total = 0;
+  cart.forEach(c=>{
+    const item = document.createElement('li');
+    let subtotal = c.qty * c.price_unit;
+    item.textContent = `${c.name} x${c.qty} - R$${subtotal.toFixed(2)}`;
+    total += subtotal;
+
+    if(c.addons?.length){
+      const ul = document.createElement('ul');
+      c.addons.forEach(a=>{
+        const li2 = document.createElement('li');
+        const sub = a.qty * a.price_unit;
+        li2.textContent = `+ ${a.name} x${a.qty} - R$${sub.toFixed(2)}`;
+        ul.appendChild(li2);
+        total += sub;
+      });
+      item.appendChild(ul);
+    }
+    list.appendChild(item);
+  });
+
+  const delivery = parseFloat($('deliveryFee').value) || 0;
+  total += delivery;
+  $('totalValue').textContent = total.toFixed(2);
+}
+
+// === FINALIZAR VENDA ===
+$('finalize').addEventListener('click', async ()=>{
+  if(cart.length===0) return alert('Carrinho vazio.');
+
+  const payload = {
+    items: cart,
+    app_id: parseInt($('appSelect').value),
+    payment_method_id: parseInt($('paymentSelect').value),
+    delivery_fee: parseFloat($('deliveryFee').value) || 0
+  };
+  const res = await fetchJSON('/sales', {
+    method:'POST',
+    body: JSON.stringify(payload)
+  });
+
+  if(res && res.success){
+    alert('Venda registrada com sucesso!');
     cart = [];
     renderCart();
-    showMenu(false);
-    showSection('loginSection');
+  } else alert('Erro ao registrar venda.');
+});
+
+// === RELATÓRIOS ===
+$('loadSales').addEventListener('click', async ()=>{
+  const from = $('fromDate').value, to = $('toDate').value;
+  const data = await fetchJSON(`/sales?from=${from}&to=${to}`);
+  const out = $('reportsOutput');
+  out.innerHTML = '<h4>Vendas</h4>';
+  data?.forEach(r=>{
+    const div = document.createElement('div');
+    div.textContent = `${r.date_time} - R$${r.total.toFixed(2)} - ${r.app_name||''} - ${r.payment_name||''}`;
+    out.appendChild(div);
+  });
+});
+
+$('loadTopProducts').addEventListener('click', async ()=>{
+  const from = $('fromDate').value, to = $('toDate').value;
+  const data = await fetchJSON(`/reports/top-products?from=${from}&to=${to}`);
+  const out = $('reportsOutput');
+  out.innerHTML = '<h4>Top Copos</h4>';
+  data?.forEach(r=>{
+    const d = document.createElement('div');
+    d.textContent = `${r.name} — ${r.qtd} vendidos`;
+    out.appendChild(d);
+  });
+});
+
+$('loadTopAddons').addEventListener('click', async ()=>{
+  const from = $('fromDate').value, to = $('toDate').value;
+  const data = await fetchJSON(`/reports/top-addons?from=${from}&to=${to}`);
+  const out = $('reportsOutput');
+  out.innerHTML = '<h4>Top Adicionais</h4>';
+  data?.forEach(r=>{
+    const d = document.createElement('div');
+    d.textContent = `${r.name} — ${r.qtd} vendidos`;
+    out.appendChild(d);
+  });
+});
+
+// === ESTOQUE ===
+$('stockSubmit').addEventListener('click', async ()=>{
+  const produto = $('stockProduto').value.trim();
+  const tipo = $('stockTipo').value;
+  const quantidade = parseFloat($('stockQuant').value);
+  const valor = parseFloat($('stockValor').value) || null;
+  const motivo = $('stockMotivo').value;
+
+  const res = await fetchJSON('/stock/movements', {
+    method:'POST',
+    body: JSON.stringify({ produto, tipo, quantidade, valor_unitario:valor, motivo })
   });
 
-  // MENU NAV
-  const btnVenda = $('btnVenda');
-  if(btnVenda) btnVenda.addEventListener('click', ()=> showSection('pdvSection'));
-  const btnRel = $('btnRelatorios');
-  if(btnRel) btnRel.addEventListener('click', ()=> showSection('reportsSection'));
-  const btnEst = $('btnEstoque');
-  if(btnEst) btnEst.addEventListener('click', ()=> showSection('stockSection'));
+  if(res && res.success){
+    alert('Movimento registrado!');
+    $('stockProduto').value = '';
+  } else alert('Erro ao registrar movimento.');
+});
 
-  // ADD PRODUCT
-  const addProductBtn = $('addProduct');
-  if(addProductBtn) addProductBtn.addEventListener('click', async ()=>{
-    const id = parseInt($('productSelect')?.value);
-    const qty = parseInt($('productQty')?.value) || 1;
-    if(!id) return alert('Selecione um produto');
-    const prodList = await fetchJSON('/products');
-    const prod = (prodList || []).find(p => p.id === id);
-    if(!prod) return alert('Produto inválido');
-    cart.push({ type:'product', product_id: id, name: prod.name, qty, price_unit: prod.price, addons: [] });
-    renderCart();
+$('loadStock').addEventListener('click', async ()=>{
+  const data = await fetchJSON('/stock');
+  const out = $('stockOutput');
+  out.innerHTML = '<h4>Saldo de Estoque</h4>';
+  data?.forEach(r=>{
+    const d = document.createElement('div');
+    d.textContent = `${r.produto} — Entrada: ${r.entrada} | Saída: ${r.saida} | Saldo: ${r.saldo}`;
+    out.appendChild(d);
   });
-
-  // ADD ADDON
-  const addAddonBtn = $('addAddon');
-  if(addAddonBtn) addAddonBtn.addEventListener('click', async ()=>{
-    const id = parseInt($('addonSelect')?.value);
-    const qty = parseInt($('addonQty')?.value) || 1;
-    if(!id) return alert('Selecione um adicional');
-    const list = await fetchJSON('/add_ons');
-    const addon = (list || []).find(a => a.id === id);
-    if(!addon) return alert('Adicional inválido');
-    if(cart.length > 0 && cart[cart.length-1].type === 'product'){
-      cart[cart.length-1].addons.push({ addon_id: id, name: addon.name, qty, price_unit: addon.price });
-    } else {
-      cart.push({ type:'addon', addon_id: id, name: addon.name, qty, price_unit: addon.price });
-    }
-    renderCart();
-  });
-
-  // FINALIZE
-  const finalizeBtn = $('finalize');
-  if(finalizeBtn) finalizeBtn.addEventListener('click', async ()=>{
-    if(cart.length === 0) return alert('Carrinho vazio.');
-    const payload = {
-      items: cart.map(c => {
-        if(c.type === 'product') {
-          return { product_id: c.product_id, qty: c.qty, price_unit: c.price_unit, addons: (c.addons||[]).map(a=>({ addon_id: a.addon_id, qty: a.qty, price_unit: a.price_unit })) };
-        } else {
-          return { product_id: null, qty: c.qty, price_unit: c.price_unit, addons: [] };
-        }
-      }),
-      app_id: parseInt($('appSelect')?.value) || null,
-      payment_method_id: parseInt($('paymentSelect')?.value) || null,
-      delivery_fee: parseFloat($('deliveryFee')?.value) || 0
-    };
-    const res = await fetchJSON('/sales', { method:'POST', body: JSON.stringify(payload) });
-    if(res && res.success){
-      alert('Venda registrada — Total R$ ' + (res.total || 0).toFixed(2));
-      cart = [];
-      renderCart();
-    } else {
-      alert('Erro ao registrar venda: ' + (res?.error || 'Desconhecido'));
-    }
-  });
-
-  // REPORTS
-  const loadSalesBtn = $('loadSales');
-  if(loadSalesBtn) loadSalesBtn.addEventListener('click', async ()=>{
-    const from = $('fromDate')?.value || '';
-    const to = $('toDate')?.value || '';
-    const rows = await fetchJSON(`/sales?from=${from}&to=${to}`);
-    const out = $('reportsOutput');
-    out.innerHTML = '<h4>Vendas</h4>';
-    (rows || []).forEach(r => {
-      const d = document.createElement('div');
-      d.textContent = `${r.date_time} - R$${(r.total||0).toFixed(2)} - ${r.app_name||''} - ${r.payment_name||''}`;
-      out.appendChild(d);
-    });
-  });
-
-  // TOPS
-  $('loadTopProducts')?.addEventListener('click', async ()=>{
-    const rows = await fetchJSON('/reports/top-products');
-    const out = $('reportsOutput'); out.innerHTML = '<h4>Top Copos</h4>';
-    (rows || []).forEach(r => { const d = document.createElement('div'); d.textContent = `${r.name} — ${r.qtd} vendidos`; out.appendChild(d); });
-  });
-  $('loadTopAddons')?.addEventListener('click', async ()=>{
-    const rows = await fetchJSON('/reports/top-addons');
-    const out = $('reportsOutput'); out.innerHTML = '<h4>Top Adicionais</h4>';
-    (rows || []).forEach(r => { const d = document.createElement('div'); d.textContent = `${r.name} — ${r.qtd} vendidos`; out.appendChild(d); });
-  });
-
-  // STOCK
-  $('stockSubmit')?.addEventListener('click', async ()=>{
-    const produto = $('stockProduto')?.value?.trim();
-    const tipo = $('stockTipo')?.value;
-    const quantidade = parseFloat($('stockQuant')?.value) || 0;
-    const valor_unitario = parseFloat($('stockValor')?.value) || null;
-    const motivo = $('stockMotivo')?.value || '';
-    const res = await fetchJSON('/stock/movements', { method: 'POST', body: JSON.stringify({ produto, tipo, quantidade, valor_unitario, motivo }) });
-    if(res && res.success){
-      alert('Movimento registrado!');
-      $('stockProduto').value = '';
-      $('stockQuant').value = '1';
-    } else alert('Erro: ' + (res?.error||'Desconhecido'));
-  });
-
-  $('loadStock')?.addEventListener('click', async ()=>{
-    const rows = await fetchJSON('/stock');
-    const out = $('stockOutput'); out.innerHTML = '<h4>Saldo</h4>';
-    (rows || []).forEach(r => { const d = document.createElement('div'); d.textContent = `${r.produto} — Entrada: ${r.entrada} | Saída: ${r.saida} | Saldo: ${r.saldo}`; out.appendChild(d); });
-  });
-
-}); // DOMContentLoaded
+});
