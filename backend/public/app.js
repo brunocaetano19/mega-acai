@@ -9,14 +9,20 @@ document.addEventListener("DOMContentLoaded", () => {
   // === FUNÇÕES GERAIS ===
   function $(id) { return document.getElementById(id); }
 
-  function hideAllSections() {
-    document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
-  }
+    function hideAllSections() {
+      document.querySelectorAll('.section').forEach(s => {
+        s.classList.add('hidden');
+        s.classList.remove('active');  // Remove a classe active
+      });
+    }
 
-  function showSection(sectionId) {
-    hideAllSections();
-    $(sectionId).classList.remove('hidden');
-  }
+    function showSection(sectionId) {
+      hideAllSections();
+      const sec = $(sectionId);
+      sec.classList.remove('hidden');
+      sec.classList.add('active');  // Adiciona a classe active
+    }
+
 
   function showMenu(show) {
     if (show) $('menu').classList.remove('hidden');
