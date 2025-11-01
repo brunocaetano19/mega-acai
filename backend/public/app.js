@@ -76,11 +76,13 @@ document.addEventListener("DOMContentLoaded", () => {
     $('loginSection').classList.remove('hidden');
   });
 
-  // === MENU ===
-  $('btnVenda').addEventListener('click', () => showSection('pdvSection'));
-  $('btnRelatorios').addEventListener('click', () => showSection('reportsSection'));
-  $('btnEstoque').addEventListener('click', () => showSection('stockSection'));
-
+    // === MENU ===
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const section = btn.getAttribute('data-section');
+        showSection(section);
+      });
+    });
   // === INICIALIZAÇÃO ===
   async function init() {
     const [products, addons, apps, payments] = await Promise.all([
