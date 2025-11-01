@@ -5,11 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sistema Mega Açaí</title>
   <link rel="stylesheet" href="style.css">
-  <link rel="icon" type="image/x-icon" href="./Logosf.png">
+  <link rel="icon" type="image/png" href="./Logosf.png">
 </head>
 <body>
 
-  <!-- === TELA DE LOGIN === -->
+  <!-- === LOGIN === -->
   <section id="loginSection" class="section active">
     <div class="container fade-in">
       <img src="./Logosf.png" alt="Logo Mega Açaí" class="logo">
@@ -21,20 +21,20 @@
     </div>
   </section>
 
-  <!-- === MENU (somente após login) === -->
+  <!-- === MENU === -->
   <header id="menu" class="hidden">
     <div class="container">
-      <h2 id="userArea"></h2>
-      <div class="menu">
-        <button id="btnVenda">PDV</button>
-        <button id="btnRelatorios">Relatórios</button>
-        <button id="btnEstoque">Estoque</button>
+      <h2 id="userArea">Bem-vindo!</h2>
+      <nav class="menu">
+        <button data-section="pdvSection" class="nav-btn">PDV</button>
+        <button data-section="reportsSection" class="nav-btn">Relatórios</button>
+        <button data-section="stockSection" class="nav-btn">Estoque</button>
         <button id="btnLogout" class="logout">Sair</button>
-      </div>
+      </nav>
     </div>
   </header>
 
-  <!-- === SEÇÕES === -->
+  <!-- === PDV === -->
   <section id="pdvSection" class="section hidden fade-in">
     <h2>Ponto de Venda</h2>
     <div class="pdv-container">
@@ -56,16 +56,20 @@
     </div>
   </section>
 
+  <!-- === RELATÓRIOS === -->
   <section id="reportsSection" class="section hidden fade-in">
     <h2>Relatórios</h2>
-    <input type="date" id="fromDate">
-    <input type="date" id="toDate">
-    <button id="loadSales">Vendas</button>
-    <button id="loadTopProducts">Top Copos</button>
-    <button id="loadTopAddons">Top Adicionais</button>
+    <div class="report-controls">
+      <input type="date" id="fromDate">
+      <input type="date" id="toDate">
+      <button id="loadSales">Vendas</button>
+      <button id="loadTopProducts">Top Copos</button>
+      <button id="loadTopAddons">Top Adicionais</button>
+    </div>
     <div id="reportsOutput"></div>
   </section>
 
+  <!-- === ESTOQUE === -->
   <section id="stockSection" class="section hidden fade-in">
     <h2>Controle de Estoque</h2>
     <input type="text" id="stockProduto" placeholder="Produto">
@@ -81,6 +85,7 @@
     <div id="stockOutput"></div>
   </section>
 
+  <!-- === TOAST === -->
   <div class="toast" id="toast"></div>
 
   <script src="app.js"></script>
