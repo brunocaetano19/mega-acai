@@ -1,5 +1,5 @@
 // === CONFIGURAÇÃO ===
-const API = ''; // Mesmo domínio (Render)
+const API = 'https://sistema-mega-acai.onrender.com/'; // Mesmo domínio (Render)
 let token = null;
 let cart = [];
 
