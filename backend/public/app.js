@@ -9,26 +9,26 @@ document.addEventListener("DOMContentLoaded", () => {
   // === FUNÇÕES GERAIS ===
   function $(id) { return document.getElementById(id); }
 
-    function hideAllSections() {
-      document.querySelectorAll('.section').forEach(s => {
-        s.classList.add('hidden');
-        s.classList.remove('active');  // Remove a classe active
-      });
-    }
+  function hideAllSections() {
+    document.querySelectorAll('.section').forEach(s => {
+      s.classList.add('hidden');
+      s.classList.remove('active'); // Remove a classe active
+    });
+  }
 
-    function showSection(sectionId) {
-      hideAllSections();
-      const sec = $(sectionId);
-      sec.classList.remove('hidden');
-      sec.classList.add('active');  // Adiciona a classe active
-    }
-
+  function showSection(sectionId) {
+    hideAllSections();
+    const sec = $(sectionId);
+    sec.classList.remove('hidden');
+    sec.classList.add('active'); // Adiciona a classe active
+  }
 
   function showMenu(show) {
     if (show) $('menu').classList.remove('hidden');
     else $('menu').classList.add('hidden');
   }
 
+  // === CORREÇÃO: fetchJSON COM CATCH
   async function fetchJSON(endpoint, options = {}) {
     options.headers = options.headers || {};
     options.headers['Content-Type'] = 'application/json';
@@ -64,7 +64,6 @@ document.addEventListener("DOMContentLoaded", () => {
       token = res.token;
       $('userArea').textContent = `${res.user.name} (${res.user.email})`;
 
-      // Mostra menu e PDV por padrão
       showMenu(true);
       $('loginSection').classList.add('hidden');
       showSection('pdvSection');
@@ -82,13 +81,14 @@ document.addEventListener("DOMContentLoaded", () => {
     $('loginSection').classList.remove('hidden');
   });
 
-    // === MENU ===
-    document.querySelectorAll('.nav-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const section = btn.getAttribute('data-section');
-        showSection(section);
-      });
+  // === MENU ===
+  document.querySelectorAll('.nav-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const section = btn.getAttribute('data-section');
+      showSection(section);
     });
+  });
+
   // === INICIALIZAÇÃO ===
   async function init() {
     const [products, addons, apps, payments] = await Promise.all([
@@ -259,4 +259,4 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-}); // <-- Fecha o DOMContentLoaded 
+}); // <-- Fecha o DOMContentLoaded
