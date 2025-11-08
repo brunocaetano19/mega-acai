@@ -26,7 +26,7 @@
     <div class="container header-flex">
       <span id="userArea">Admin Mega Açaí (admin@megaacai)</span>
       <nav class="menu">
-        <button data-section="pdvSection" class="nav-btn">PDV</button>
+        <button data-section="pdvSection" id="pdvBtn" class="nav-btn">PDV</button>
         <button data-section="reportsSection" class="nav-btn">Relatórios</button>
         <button data-section="stockSection" class="nav-btn">Estoque</button>
         <button id="btnLogout" class="logout">Sair</button>
@@ -85,41 +85,103 @@
   <!-- === TOAST === -->
   <div class="toast" id="toast"></div>
 
-  <!-- === JS NA PRÓPRIA PÁGINA === -->
   <script>
-    // UTILITÁRIO: Toggle
+    // ==== APP LOGIC ====
+
+    const API = '';
+    let token = null;
+    let cart = [];
+
+    function $(id) { return document.getElementById(id); }
+
+    function hideAllSections() {
+      document.querySelectorAll('.section').forEach(s => {
+        s.classList.add('hidden');
+        s.classList.remove('active');
+      });
+    }
+
     function showSection(sectionId) {
-      document.querySelectorAll("main > section").forEach(s => s.classList.add('hidden'));
-      if(sectionId) {
-        document.getElementById(sectionId).classList.remove('hidden');
+      hideAllSections();
+      if (sectionId) {
+        const sec = $(sectionId);
+        sec.classList.remove('hidden');
+        sec.classList.add('active');
       }
     }
 
-    // LOGIN SIMPLIFICADO (Ajuste conforme autenticação real)
-    document.getElementById('btnLogin').onclick = function() {
+    async function fetchJSON(endpoint, options = {}) {
+      options.headers = options.headers || {};
+      options.headers['Content-Type'] = 'application/json';
+      if (token) options.headers['Authorization'] = 'Bearer ' + token;
+      try {
+        const res = await fetch(API + endpoint, options);
+        if (!res.ok) throw new Error(`Erro ${res.status}`);
+        return await res.json();
+      } catch (err) {
+        console.error('Erro ao buscar:', err);
+        alert('Falha na comunicação com o servidor.');
+        return null;
+      }
+    }
+
+    // ==== INIT DATA ====
+    async function initPDV() {
+      const [products, addons, apps, payments] = await Promise.all([
+        fetchJSON('/products'),
+        fetchJSON('/add_ons'),
+        fetchJSON('/apps'),
+        fetchJSON('/payment_methods')
+      ]);
+      populateSelect('productSelect', products);
+      populateSelect('addonSelect', addons);
+      populateSelect('appSelect', apps);
+      populateSelect('paymentSelect', payments);
+    }
+
+    function populateSelect(id, items) {
+      const sel = $(id);
+      sel.innerHTML = '';
+      if (!items) return;
+      items.forEach(i => {
+        const opt = document.createElement('option');
+        opt.value = i.id;
+        opt.textContent = i.name + (i.price ? ` - R$${i.price.toFixed(2)}` : '');
+        sel.appendChild(opt);
+      });
+    }
+
+    // ==== LOGIN (simplificado) ====
+    $('btnLogin').onclick = async function() {
+      // Para demo, entra direto como admin
       document.getElementById('loginSection').classList.add('hidden');
       document.getElementById('menuHeader').classList.remove('hidden');
+      $('userArea').textContent = 'Admin Mega Açaí (admin@megaacai)';
       showSection(null);
     };
 
-    // BOTÕES DE NAVEGAÇÃO
-    document.querySelectorAll('.nav-btn').forEach(btn => {
-      btn.onclick = function() {
-        showSection(this.dataset.section);
-      };
-    });
+    // ==== NAVEGAÇÃO ====
+    document.querySelector('[data-section="pdvSection"]').onclick = async function() {
+      showSection('pdvSection');
+      await initPDV();
+    };
+    document.querySelector('[data-section="reportsSection"]').onclick = function() {
+      showSection('reportsSection');
+      // Adicione lógica aqui se quiser carregar dados de relatórios ao abrir o menu
+    };
+    document.querySelector('[data-section="stockSection"]').onclick = function() {
+      showSection('stockSection');
+      // Adicione lógica aqui se quiser carregar dados de estoque ao abrir o menu
+    };
 
-    // LOGOUT
-    document.getElementById('btnLogout').onclick = function() {
+    $('btnLogout').onclick = function() {
       document.getElementById('loginSection').classList.remove('hidden');
       document.getElementById('menuHeader').classList.add('hidden');
       showSection(null);
     };
 
-    // Ao iniciar, oculta todos os conteúdos do main
+    // Ocultar tudo ao iniciar
     showSection(null);
-
-    // Dica: Adicione o resto do seu JS dos módulos aqui!
   </script>
 </body>
 </html>
