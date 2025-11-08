@@ -87,7 +87,6 @@
 
   <script>
     // ==== APP LOGIC ====
-
     const API = '';
     let token = null;
     let cart = [];
@@ -153,11 +152,11 @@
 
     // ==== LOGIN (simplificado) ====
     $('btnLogin').onclick = async function() {
-      // Para demo, entra direto como admin
       document.getElementById('loginSection').classList.add('hidden');
       document.getElementById('menuHeader').classList.remove('hidden');
       $('userArea').textContent = 'Admin Mega Açaí (admin@megaacai)';
-      showSection(null);
+      showSection('pdvSection');
+      await initPDV(); // Carrega dados PDV ao logar
     };
 
     // ==== NAVEGAÇÃO ====
@@ -167,11 +166,11 @@
     };
     document.querySelector('[data-section="reportsSection"]').onclick = function() {
       showSection('reportsSection');
-      // Adicione lógica aqui se quiser carregar dados de relatórios ao abrir o menu
+      // Lógica relatórios se necessário
     };
     document.querySelector('[data-section="stockSection"]').onclick = function() {
       showSection('stockSection');
-      // Adicione lógica aqui se quiser carregar dados de estoque ao abrir o menu
+      // Lógica estoque se necessário
     };
 
     $('btnLogout').onclick = function() {
@@ -182,8 +181,7 @@
 
     // Ocultar tudo ao iniciar
     showSection(null);
-  </script>
-  <script src="app.js"></script>
 
+  </script>
 </body>
 </html>
