@@ -1,119 +1,140 @@
 body {
-    margin: 0;
-    font-family: 'Poppins', sans-serif;
-    background: linear-gradient(135deg, #5b0d68, #ff0077);
-    color: #fff;
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  margin: 0;
+  font-family: 'Poppins', sans-serif;
+  background: linear-gradient(135deg, #5b0d68, #ff0077);
+  color: #fff;
+  min-height: 100vh;
 }
 
 .hidden {
-    display: none !important;
+  display: none !important;
 }
 
 .container {
-    width: 90%;
-    max-width: 400px;
-    text-align: center;
-    animation: fadeIn 1s ease;
+  width: 90%;
+  max-width: 500px;
+  text-align: center;
+  margin: auto;
+  animation: fadeIn 1s ease;
 }
 
 .logo {
-    width: 180px;
-    margin-bottom: 30px;
-    animation: float 3s ease-in-out infinite;
+  width: 180px;
+  margin-bottom: 30px;
+  animation: float 3s ease-in-out infinite;
+}
+
+/* === HEADER FLEX === */
+.header-flex {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  background: rgba(255,255,255,0.03);
+  padding: 14px 16px;
+  border-radius: 12px;
+  margin-bottom: 36px;
 }
 
 /* === MENU === */
+.menu {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
 .menu button {
-    display: block;
-    width: 100%;
-    padding: 12px;
-    margin: 8px 0;
-    font-size: 16px;
-    background: #fff;
-    color: #8a0072;
-    border: none;
-    border-radius: 8px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: 0.3s;
+  padding: 10px 18px;
+  font-size: 16px;
+  background: #fff;
+  color: #8a0072;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.3s;
 }
 
-.menu button:hover {
-    background: #ff5fb2;
-    color: #fff;
+.menu button:hover, button:hover {
+  background: #ff5fb2;
+  color: #fff;
 }
 
+.logout {
+  background: #ffd4e1;
+  color: #8a0072;
+  margin-left: 10px;
+}
+
+main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Seções */
 section {
-    display: none;
+  display: none;
+  width: 100%;
 }
 
-section.active {
-    display: block;
+section.active, section:not(.hidden) {
+  display: block;
 }
 
 input, select {
-    width: 100%;
-    padding: 10px;
-    margin: 6px 0;
-    border-radius: 6px;
-    border: none;
-    font-size: 15px;
+  width: 100%;
+  padding: 10px;
+  margin: 6px 0;
+  border-radius: 6px;
+  border: none;
+  font-size: 15px;
 }
 
 button {
-    background: #fff;
-    color: #8a0072;
-    border: none;
-    border-radius: 6px;
-    padding: 10px 15px;
-    cursor: pointer;
-    transition: 0.3s;
-}
-
-button:hover {
-    background: #ff5fb2;
-    color: #fff;
+  background: #fff;
+  color: #8a0072;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 15px;
+  cursor: pointer;
+  transition: 0.3s;
 }
 
 .back {
-    margin-top: 15px;
-    color: #fff;
-    cursor: pointer;
-    font-size: 14px;
-    opacity: 0.8;
+  margin-top: 15px;
+  color: #fff;
+  cursor: pointer;
+  font-size: 14px;
+  opacity: 0.8;
 }
 
 .fade-in {
-    animation: fadeIn 1s ease;
+  animation: fadeIn 1s ease;
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(15px); }
-    to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes float {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-10px); }
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
 }
 
 .toast {
-    position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: #fff;
-    color: #8a0072;
-    padding: 10px 20px;
-    border-radius: 8px;
-    box-shadow: 0 3px 10px rgba(0,0,0,0.2);
-    opacity: 0;
-    transition: 0.4s;
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #fff;
+  color: #8a0072;
+  padding: 10px 20px;
+  border-radius: 8px;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+  opacity: 0;
+  transition: 0.4s;
 }
 .toast.show {
-    opacity: 1;
+  opacity: 1;
 }
