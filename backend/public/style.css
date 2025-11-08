@@ -1,49 +1,60 @@
-/* === GLOBAL === */
 body {
     margin: 0;
     font-family: 'Poppins', sans-serif;
     background: linear-gradient(135deg, #5b0d68, #ff0077);
     color: #fff;
     min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-/* Esconde elementos */
 .hidden {
     display: none !important;
 }
 
-/* Centralização da tela inicial */
-.section {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 100vh;
+.container {
+    width: 90%;
+    max-width: 400px;
     text-align: center;
-}
-
-.fade-in {
     animation: fadeIn 1s ease;
 }
 
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(15px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-/* Logo animada */
 .logo {
     width: 180px;
     margin-bottom: 30px;
     animation: float 3s ease-in-out infinite;
 }
 
-@keyframes float {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-10px); }
+/* === MENU === */
+.menu button {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    margin: 8px 0;
+    font-size: 16px;
+    background: #fff;
+    color: #8a0072;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
 }
 
-/* === INPUTS E SELECTS === */
+.menu button:hover {
+    background: #ff5fb2;
+    color: #fff;
+}
+
+section {
+    display: none;
+}
+
+section.active {
+    display: block;
+}
+
 input, select {
     width: 100%;
     padding: 10px;
@@ -53,20 +64,6 @@ input, select {
     font-size: 15px;
 }
 
-/* Remove setinhas do input number */
-input[type="number"] {
-    -moz-appearance: textfield;
-    -webkit-appearance: none;
-    appearance: none;
-}
-
-input[type="number"]::-webkit-inner-spin-button,
-input[type="number"]::-webkit-outer-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-}
-
-/* === BOTOES === */
 button {
     background: #fff;
     color: #8a0072;
@@ -82,53 +79,26 @@ button:hover {
     color: #fff;
 }
 
-/* Botões do menu/topo */
-header#menu {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 20px;
-    background: rgba(255, 255, 255, 0.9);
-    color: #8a0072;
-    position: sticky;
-    top: 0;
-    z-index: 10;
-}
-
-header#menu button {
-    margin-left: 10px;
-}
-
-/* Botões da tela inicial (centralizados) */
-.home-btn {
-    display: block;
-    width: 200px;
-    margin: 10px 0;
-    font-size: 16px;
-    font-weight: bold;
-}
-
-/* === LISTAS E CARRINHO === */
-ul {
-    list-style: none;
-    padding: 0;
-}
-
-#cartList li {
-    margin: 5px 0;
-}
-
-#cartList li ul {
-    margin-left: 15px;
-}
-
-/* === MENSAGENS E TOAST === */
 .back {
     margin-top: 15px;
     color: #fff;
     cursor: pointer;
     font-size: 14px;
     opacity: 0.8;
+}
+
+.fade-in {
+    animation: fadeIn 1s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(15px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
 }
 
 .toast {
@@ -146,17 +116,4 @@ ul {
 }
 .toast.show {
     opacity: 1;
-}
-
-/* === SECTIONS === */
-section {
-    display: none;
-}
-
-section.active {
-    display: flex;
-}
-
-main {
-    padding: 20px;
 }
